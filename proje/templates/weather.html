@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hava Durumu</title>
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            background-color;rgb(167, 198, 243);
+            color: #333;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1{
+            color:rgb(2, 46, 158);
+        }
+
+        h2{
+            color:rgb(6, 213, 220);
+        }
+
+        img {
+            width: 100px;
+            height: 100px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding:0;
+        }
+
+        ul li {
+            margin: 5px 0;
+            background-color:rgb(26, 235, 124);
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
+            width: calc(100% - 20px);
+        }
+
+        a{
+            display:inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: white;
+            background-color:rgb(151, 7, 254);
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+
+        a:hover{
+            background-color:rgb(89, 1, 134);
+        }
+
+        .city-weather{
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding:20px;
+            margin:20px auto;
+            background-color:rgb(255, 255, 255);
+            max-width:600px;
+            box-shadow: 0 0 10px rgba(0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Hava Durumu</h1>
+    {% for weather_data in weather_data_list %}
+
+        <div class="city-weather">
+        
+            <h2>{{ weather_data.current_weather.city}} için Hava Durumu </h2>
+            <img src="{{weather_data.current_weather.icon_url}}" alt="Hava Durumu İkonu">
+            <p>Hava: {{weather_data.current_weather.weather}}</p>
+            <p>Sıcaklık: {{weather_data.current_weather.temperature}}</p>
+            <p>Hissedilen Sıcaklık: {{weather_data.current_weather.feels_like}}</p>
+            <p>Nem: {{weather_data.current_weather.humidity}}</p>
+            <p>Rüzgar Hızı: {{weather_data.current_weather.wind_speed}}</p>
+        
+            
+            <ul>
+                {% for forecast in weather_data.weather_forecast %}
+                    <li>{{forecast.datetime}} - {{forecast.weather}} - {{forecast.temperature}} </li>
+
+                    {%endfor%}
+            </ul>
+        
+        </div>
+    {% endfor %}
+
+    <a href="/">Ana Sayfa</a> 
+    
+</body>
+</html>
