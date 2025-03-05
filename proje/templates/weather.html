@@ -5,92 +5,167 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hava Durumu</title>
     <style>
-        body{
+        body {
             font-family: Arial, sans-serif;
-            background-color;rgb(167, 198, 243);
+            background-color: #f7f9fc;
             color: #333;
             padding: 20px;
             text-align: center;
         }
-
-        h1{
-            color:rgb(2, 46, 158);
+        h1 {
+            color: #00509e;
         }
-
-        h2{
-            color:rgb(6, 213, 220);
+        h2 {
+            color: #007acc;
         }
-
         img {
             width: 100px;
             height: 100px;
         }
-
         ul {
             list-style-type: none;
-            padding:0;
+            padding: 0;
         }
-
         ul li {
             margin: 5px 0;
-            background-color:rgb(26, 235, 124);
+            background-color: #e9f5ff;
             padding: 10px;
             border-radius: 5px;
-            display: inline-block;
-            width: calc(100% - 20px);
+            display: block;
+            width: 100%;
         }
-
-        a{
-            display:inline-block;
+        a {
+            display: inline-block;
             margin-top: 20px;
             text-decoration: none;
             color: white;
-            background-color:rgb(151, 7, 254);
+            background-color: #00509e;
             padding: 10px 20px;
             border-radius: 5px;
         }
-
-        a:hover{
-            background-color:rgb(89, 1, 134);
+        a:hover {
+            background-color: #003f7d;
         }
-
-        .city-weather{
+        .city-weather {
             border: 1px solid #ddd;
             border-radius: 10px;
-            padding:20px;
-            margin:20px auto;
-            background-color:rgb(255, 255, 255);
-            max-width:600px;
-            box-shadow: 0 0 10px rgba(0, 0, 0.1);
+            padding: 20px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            max-width: 600px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
+
+        .alerts p{
+            font-size: 1.2em; /* Yazı boyutunu büyütme */
+            color: #721c24; /* Koyu kırmızı renk */
+            background-color: #f8d7da; /* Hafif kırmızı arka plan */
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .temperature-chart {
+            margin-top: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
     </style>
+    <script src= "https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <h1>Hava Durumu</h1>
-    {% for weather_data in weather_data_list %}
 
+    {% for weather_data in weather_data_list %}
         <div class="city-weather">
-        
-            <h2>{{ weather_data.current_weather.city}} için Hava Durumu </h2>
-            <img src="{{weather_data.current_weather.icon_url}}" alt="Hava Durumu İkonu">
-            <p>Hava: {{weather_data.current_weather.weather}}</p>
-            <p>Sıcaklık: {{weather_data.current_weather.temperature}}</p>
-            <p>Hissedilen Sıcaklık: {{weather_data.current_weather.feels_like}}</p>
-            <p>Nem: {{weather_data.current_weather.humidity}}</p>
-            <p>Rüzgar Hızı: {{weather_data.current_weather.wind_speed}}</p>
-        
-            
+            <h2>{{ weather_data.current_weather.city }} için Hava Durumu</h2>
+            <img src="{{ weather_data.current_weather.icon_url }}" alt="Hava Durumu İkonu">
+            <p>Hava: {{ weather_data.current_weather.weather }}</p>
+            <p>Sıcaklık: {{ weather_data.current_weather.temperature }}</p>
+            <p>Hissedilen Sıcaklık: {{ weather_data.current_weather.feels_like }}</p>
+            <p>Nem: {{ weather_data.current_weather.humidity }}</p>
+            <p>Rüzgar Hızı: {{ weather_data.current_weather.wind_speed }}</p>
+            <p>Hava Basıncı: {{ weather_data.current_weather.pressure }}</p>
+            <p>Gün Doğumu: {{ weather_data.current_weather.sunrise }}</p>
+            <p>Gün Batımı: {{ weather_data.current_weather.sunset }}</p>
+
+            <div class="alerts">
+                {% if weather_data.current_weather.alerts%}
+                    <h3>Hava Durumu Uyarıları</h3>
+                    <ul>
+                        {% for alert in weather_data.current_weather.alerts %}
+                        <li><strong>{{alert.event}}</strong>:{{alert.description}}</li>
+                        {%endfor%}
+                    </ul>
+                {%else%}
+                    <p>Uyarı Yok </p>
+                {% endif %}
+            </div>
+
+            <div class="temperatureChart">
+                <canvas id="temperatureChart{{loop.index}}"></canvas>
+            </div>
+
+
+            <script>
+                const ctx{{loop.index}} = document.getElementById('temperatureChart{{loop.index}}').getContext('2d');
+                const temperatureData{{loop.index}} = {
+                    labels: [
+                        {%for forecast in weather_data.weather_forecast%}
+                        '{{forecast.datetime}}',
+                        {%endfor%}
+                    ],
+                
+                    datasets: [{
+
+                        label: 'Sıcaklık (°C)',
+                        data:[
+                            {%for forecast in weather_data.weather_forecast%}
+                            {{forecast.temperature.split("°")[0]}},
+                            {%endfor%}
+                        ],
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill:true
+                    }]
+                };
+
+                const temperatureChart{{loop.index}} = new Chart(ctx{{loop.index}}, {
+
+                    type: 'line',
+                    data: temperatureData{{loop.index}},
+                    options:{
+                        responsive:true,
+                        scales:{
+                            x:{
+                                title:{
+                                    display:true,
+                                    text:'Zaman'
+                                }
+                            },
+                            y:{
+                                title:{
+                                    display:true,
+                                    text: 'Sıcaklık'
+                                }
+                            }
+                        }
+                    }
+
+                });
+            </script>
+
+            <h3>5 Günlük Tahmin</h3>
             <ul>
                 {% for forecast in weather_data.weather_forecast %}
-                    <li>{{forecast.datetime}} - {{forecast.weather}} - {{forecast.temperature}} </li>
-
-                    {%endfor%}
+                    <li>{{ forecast.datetime }} - {{ forecast.weather }} - {{ forecast.temperature }}</li>
+                {% endfor %}
             </ul>
-        
         </div>
     {% endfor %}
 
-    <a href="/">Ana Sayfa</a> 
-    
+    <a href="/" aria-label="Ana sayfaya dönmek için tıklayın">Ana Sayfa</a>
 </body>
 </html>

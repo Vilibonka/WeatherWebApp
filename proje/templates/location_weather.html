@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konuma Göre Hava Durumu</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2em;
+            color: #333;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #map {
+            width: 100%;
+            height: 400px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        #weatherInfo {
+            margin-top: 20px;
+        }
+
+        #loading {
+            color: #888;
+        }
+
+        .weather-details {
+            font-size: 1.1em;
+            color: #555;
+            text-align: left;
+            margin: 10px 0;
+        }
+
+        img {
+            margin-top: 10px;
+            max-width: 50px;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        .back-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+
+        .back-button:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Konuma Göre Hava Durumu</h1>
+        <button id="getWeather">Konumuma Göre Hava Durumu Göster</button>
+        <div id="map"></div>
+        <div id="loading" style="display:none;">Hava durumu yükleniyor...</div>
+        <div id="weatherInfo"></div>
+        <button class="back-button" onclick="window.location.href='/';">Ana Sayfaya Dön</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const weatherInfoDiv = document.getElementById("weatherInfo");
+        const loadingDiv = document.getElementById("loading");
+
+        document.getElementById("getWeather").addEventListener("click", function () {
+            weatherInfoDiv.innerHTML = "";
+            loadingDiv.style.display = "block";
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+
+                    showWeather(latitude, longitude);
+                }, function () {
+                    loadingDiv.style.display = "none";
+                    weatherInfoDiv.innerHTML = `<p class="error">Konum bilgisi alınamadı!</p>`;
+                });
+            } else {
+                loadingDiv.style.display = "none";
+                alert("Tarayıcınız konum bilgisi almayı desteklemiyor!");
+            }
+        });
+
+        const map = L.map('map').setView([39.92077, 32.85411], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        map.on("click", function (e) {
+            const { lat, lng } = e.latlng;
+            showWeather(lat, lng);
+        });
+
+        function showWeather(latitude, longitude) {
+            weatherInfoDiv.innerHTML = "";
+            loadingDiv.style.display = "block";
+
+            fetch("/weather/location", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ latitude, longitude })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingDiv.style.display = "none";
+                if (data.error) {
+                    weatherInfoDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    weatherInfoDiv.innerHTML = `
+                        <h2>${data.city} için Hava Durumu</h2>
+                        <div class="weather-details">
+                            <p><strong>Hava:</strong> ${data.weather}</p>
+                            <p><strong>Sıcaklık:</strong> ${data.temperature}</p>
+                            <p><strong>Hissedilen Sıcaklık:</strong> ${data.feels_like}</p>
+                            <p><strong>Nem:</strong> ${data.humidity}</p>
+                            <p><strong>Rüzgar Hızı:</strong> ${data.wind_speed}</p>
+                            <p><strong>Hava Basıncı:</strong> ${data.pressure}</p>
+                            <p><strong>Gün Doğumu:</strong> ${data.sunrise}</p>
+                            <p><strong>Gün Batımı:</strong> ${data.sunset}</p>
+                            <img src="${data.icon_url}" alt="Hava Durumu İkonu">
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                loadingDiv.style.display = "none";
+                weatherInfoDiv.innerHTML = `<p class="error">Hava durumu bilgisi alınırken bir hata oluştu.</p>`;
+            });
+        }
+    </script>
+</body>
+</html>

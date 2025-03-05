@@ -5,58 +5,161 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hava Durumu</title>
     <style>
-        body{
+        body {
             font-family: Arial, sans-serif;
-            background-color:rgb(109, 255, 253) 
+            background-color: #f0f8ff;
             color: #333;
-            text-align:center;
+            text-align: center;
             padding: 20px;
         }
-
-        h1{
-            color:rgb(3, 15, 255) 
+        h1 {
+            color: #00509e;
         }
-
-        form{
-            margin-top:20px;
+        form {
+            margin-top: 20px;
         }
-
-        input[type="text"]{
-            padding:10px;
-            width:300px;
-            border: 1px solid #ccc
+        input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ccc;
             border-radius: 5px;
             margin-top: 10px;
         }
-
         button {
             padding: 10px 20px;
-            background-color:rgb(58, 0, 251)
+            background-color: #00509e;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-top:10px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #003f7d;
         }
 
-         button:hover{
-            background-color:rgb(0, 5, 142)
-         }
+        .favorite-cities{
+            margin-top: 20px;
+        }
 
-         footer{
-            margin-top:20px;
+        .favorite-cities button{
+            background-color: #007acc;
+            margin: 5px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .favorite-cities button.remove{
+            background-color: #d9534f;
+        }
+
+        footer {
+            margin-top: 20px;
             font-size: 0.9em;
-            color: #333;
-         }
+            color: #666;
+        }
     </style>
-
 </head>
 <body>
     <h1>Hava Durumu Öğren</h1>
+    <p>Bir veya birden fazla şehir adı girerek anlık hava durumunu ve tahminlerini öğrenebilirsiniz.</p>
+
     <form action="/weather" method="post">
-        <label for="cities">Şehir Adlarını Girin (Virgüllerle ayırınız!):</label><br> 
-        <input type="text" name="cities" placeholder="Örnek: İstanbul, Ankara, İzmir" required>
-        <button type="submit">Gönder</button>
+        <label for="cities">Şehir Adlarını Girin (Virgülle ayırarak):</label><br>
+        <input type="text" name="cities" id="cities" placeholder="Örnek: İstanbul, Ankara, İzmir" aria-label="Şehir adlarını virgül ile ayırarak buraya girin" required> <!-- Şehir adı girişi -->
+        <button type="submit" aria-label="Hava durumu sorgusu yapmak için tıklayın">Gönder</button>
     </form>
+
+    <p>Veya Konuma Göre Hava Durumu Görmek İçin</p>
+    <a href="/location-weather">
+        <button type="button" aria-label="Konuma göre hava durumu görmek için tıklayın">Konuma Göre Hava Durumu</button>
+    </a>
+
+    <div class="favorite-cities">
+
+        <h3>Favori Şehirler</h3>
+        <div id="favoriteCitiesList"></div>
+        <button id="addFavoriteCity">Favori Şehir Ekle</button>
+    </div>
+
+    <footer>
+        <p>Hava durumu bilgileri OpenWeatherMap API'sinden alınmaktadır.</p>
+    </footer>
+
+    <script>
+
+        function loadFavoriteCities(){
+
+            const favoriteCities = JSON.parse(localStorage.getItem("favoriteCities")) || [];
+
+            const favoriteCitiesList = document.getElementById("favoriteCitiesList");
+
+            favoriteCitiesList.innerHTML = "";
+
+            favoriteCities.forEach((city,index)=>{
+
+                const cityButton = document.createElement("button");
+                cityButton.textContent = city;
+
+                cityButton.onclick = () => {
+                    window.location.href = `/weather?cities=${city}`;
+                };
+
+                const removeButton = document.createElement("button");
+                removeButton.textContent = "Kaldır";
+                removeButton.classList.add("remove");
+
+                removeButton.onclick = (e) => {
+                    e.stopPropagation();
+                    removeFavoriteCity(index);
+                };
+
+                const cityContainer = document.createElement("div");
+                cityContainer.appendChild(cityButton);
+                cityContainer.appendChild(removeButton);
+
+                favoriteCitiesList.appendChild(cityContainer);
+
+            });
+        }
+
+        document.getElementById("addFavoriteCity").addEventListener("click",function(){
+
+            const cityInput = document.getElementById("cities").value.trim();
+            if(cityInput){
+                const favoriteCities =JSON.parse(localStorage.getItem("favoriteCities")) || [];
+
+
+                if(!favoriteCities.includes(cityInput)){
+
+                    favoriteCities.push(cityInput);
+                    localStorage.setItem("favoriteCities",JSON.stringify(favoriteCities));
+                    loadFavoriteCities();
+                    alert(`${cityInput} favoriler eklendi!`)
+                    document.getElementById("cities").value = "";
+
+                }else{
+                    alert(`${cityInput}zaten favorilerde`);
+                }
+
+
+            }
+
+        });
+
+        function removeFavoriteCity(index){
+
+            const favoriteCities = JSON.parse(localStorage.getItem("favoriteCities")) || [];
+            favoriteCities.splice(index,1);
+            localStorage.setItem("favoriteCities",JSON.stringify(favoriteCities));
+            loadFavoriteCities();
+            alert("Şehir Favorilerden Kaldırıldı!");
+        }
+
+        loadFavoriteCities();
+
+
+    </script>
+
 </body>
 </html>
